@@ -1,0 +1,11 @@
+"0","# get top 5 co-benefits for each local authority
+authority_data_top5 <- authority_data %>% 
+  group_by(`co-benefit_type`) %>% 
+  arrange(local_authority, desc(mean)) %>%
+  ungroup() %>%
+  group_by(local_authority) %>%
+  slice(1:5) %>%
+  ungroup()
+"
+"2","Error: object 'authority_data' not found
+"

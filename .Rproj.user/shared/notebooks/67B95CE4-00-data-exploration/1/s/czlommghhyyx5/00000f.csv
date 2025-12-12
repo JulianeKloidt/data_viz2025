@@ -1,0 +1,8 @@
+"0","ookup_s <- lookup %>% select(-""...5"") %>%
+  filter(nation == ""Scotland"")
+
+# filter data to only include Scottish areas
+data_s <- inner_join(data, lookup_s, by=(""small_area""))
+"
+"2","Error: object 'lookup_s' not found
+"
