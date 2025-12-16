@@ -54,6 +54,10 @@ authority_data_top5_ranked <- authority_data_top5 %>%
   group_by(`co-benefit_type`) %>%
   summarise(sum = sum(mean)) %>% arrange(desc(sum))
 
+ggplot(authority_data_top5, aes(x=`co-benefit_type`, y = mean, fill= `co-benefit_type`))+
+  geom_col() +
+  facet_wrap(~local_authority) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 
 # get bottom 5 co-benefits for each local authority
