@@ -10,11 +10,10 @@ editor_options:
 
 ## Background
 
-![*Note.* Telling effective data stories with data narrative and
-visuals](images/Screenshot 2025-11-19 at 12.45.20.png){alt="Storytelling ARC"}
+![Storytelling ARC](images/Screenshot%202025-11-19%20at%2012.45.20.png)
 
 ![*Note.* Outlines for potential data
-narratives](images/Screenshot 2025-11-19 at 12.49.25.png)
+narratives](images/Screenshot%202025-11-19%20at%2012.49.25.png)
 
 ## The UK Co-Benefit Atlas
 
@@ -52,6 +51,9 @@ benefit from net zero?
     meaningful differences between groups of local authorities (e.g.,
     urban vs. rural)?
 
+-   ***TO DO: plot the benefits per person for each local authority as a
+    map***
+
 **Research Question 2:** When does each local authority benefit from net
 zero?
 
@@ -79,12 +81,12 @@ tangible.
 
 Different levels of data:
 
--   **Geographical:** Scotland (g = 1), local authorities (g = x), small
-    areas (g = x)
+-   **Geographical:** Scotland (g = 1), local authorities (g = 32),
+    small areas (g = 139,520)
 
 -   **Time:** across years (t = 1), each year (t = x)
 
--   **Factors:** across factors (f = 1), each factor (f = x)
+-   **Factors:** across factors (f = 1), each factor (f = 11)
 
 -   **People:** across the population, for each person
 
