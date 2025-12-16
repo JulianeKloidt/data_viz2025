@@ -8,13 +8,6 @@ editor_options:
 
 # Data visualization competition
 
-## Background
-
-![Storytelling ARC](images/Screenshot%202025-11-19%20at%2012.45.20.png)
-
-![*Note.* Outlines for potential data
-narratives](images/Screenshot%202025-11-19%20at%2012.49.25.png)
-
 ## The UK Co-Benefit Atlas
 
 The [UK Co-Benefit Atlas](https://ukcobenefitsatlas.net), developed by
