@@ -29,7 +29,7 @@ data_benefit_factor <- data %>% group_by(local_authority, small_area, `co-benefi
 
 # small areas + SIMD
 Ggrid <- st_read("data/SG_SIMD_2020.shx")
-
+Ggrid_glasgow <- Ggrid %>% filter(LAName == "Glasgow City")
 ```
 
 # Glasgow City
@@ -38,8 +38,6 @@ Visualize the sum of all co-benefits and the top 5 co-benefits for Glasgow City 
 
 ## SIMD
 ```{r}
-Ggrid_glasgow <- Ggrid %>% filter(LAName == "Glasgow City")
-
 # SIMD
 ggplot(Ggrid_glasgow) +
   geom_sf(mapping = aes(fill=Percentv2), color="white") +
@@ -289,3 +287,11 @@ ggsave(filename = "figures/fig-map-glasgow-EXCESS-COLD.png", bg="white", width =
 
 
 ```
+
+```{r}
+ggplot(grid_glasgow_cold, aes(x=Percentv2, y = sum_weighted)) +
+  geom_jitter() +
+  geom_smooth(method="lm") +
+  ylab("Excess Cold Co-Benefits") + xlab("SIMD Percentile")
+```
+

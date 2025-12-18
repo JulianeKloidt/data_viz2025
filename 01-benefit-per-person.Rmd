@@ -20,7 +20,9 @@ library(tidyverse)
 
 data <- read_csv("data/data-scotland.csv") %>%
   select(-c(damage_pathway, damage_type, households, nation))
+
 ```
+
 
 ```{r}
 # combine co-benefits for each factor, grouped by local authority, and small area
@@ -44,10 +46,34 @@ ggplot(data_benefit_sum_authority, aes(y=sum, x = local_authority)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.x = element_blank())
 
+# 
+top_five <- c("physical_activity", "air_quality", "noise", "diet_change", "excess_cold")
 
+data_benefit_local <- data %>% rowwise() %>% mutate(weighted = sum/population) %>%
+  group_by(local_authority, `co-benefit_type`) %>%
+  summarize(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+  filter(`co-benefit_type` %in% top_five)
+
+ggplot(data_benefit_local, aes(y=weighted, x=local_authority, fill=`co-benefit_type`)) +
+  geom_bar(stat = "identity", position="stack") +
+  ylab("Benefits per local authority (Million GBP)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank())
+
+data_benefit_local %>%
+  filter(`co-benefit_type` == "physical_activity") %>%
+  arrange(desc(weighted)) %>%
+  ggplot(., aes(x=local_authority, y=weighted)) +
+  geom_bar(stat="identity") +
+  ylab("Benefits per local authority (Million GBP)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.x = element_blank())
 ```
 
-# Research Question 1
+# Research Question 1: How much does each Scottish local authority benefit from net zero?
+
+Which authorities benefit the most from reaching net zero? Are there meaningful differences between groups of local authorities (e.g., urban vs. rural)?
+
 ```{r}
 # sum of co-benefits for each local authority weighted by population
 data_benefit_sum_authority %>%
@@ -73,25 +99,32 @@ data_benefit_sum_authority %>%
             sd = sd(sum_weighted),
             min = min(sum_weighted),
             max= max(sum_weighted))
+
+# rank order authorities by co-benefit value
+data_benefit_sum_authority %>%
+  mutate(sum_weighted = (sum/population)*1000000) %>%
+  select(local_authority, sum_weighted) %>%
+  arrange(desc(sum_weighted))
+
+# top 5 beneficiaries: Angus, East Renfrewshire, East Dunbartonshire, Falkirk, Orkney Islands
+# bottom 5 beneficiaries: Glasgow City, Moray, Scottish Borders, Dumfries and Galloway, East Ayrshire
 ```
 
+# Research Question 2: When does each local authority benefit from net zero?
+
+Which authorities benefit at what time on the path to net zero? Which authorities have an early pay-out, late pay-out, constant pay-out? Are there meaningful differences between groups of local authorities (e.g., urban vs. rural)?
+
+Do authorities need to invest up front, or do they get a pay out?
+
+In what year does the local authority receive 25%, 50%, and 75% of the pay out per person?
 
 ```{r}
-# plot trajectory of benefits for each local authority
-data_benefit_authority_long <- data_benefit_sum_authority %>% 
-  select(-c(population, sum)) %>%
-  pivot_longer(cols = -c(local_authority), names_to = "year", values_to = "benefits")
-  
-ggplot(data_benefit_authority_long, aes(x=year, y=benefits, group = local_authority, color = local_authority)) +
-  theme_minimal() +
-  geom_line()
-# big city have the largest benefits (because they have most inhabitants)
-
 # plot trajectory of benefits for each local authority WEIGHTED BY POPULATION
 data_benefit_authority_long_weighted <- data_benefit_sum_authority %>% 
   rowwise() %>% mutate(across(c(`2025`:`2050`), .fns = ~./population)) %>%
   select(-c(population, sum)) %>%
-  pivot_longer(cols = -c(local_authority), names_to = "year", values_to = "benefits")
+  pivot_longer(cols = -c(local_authority), names_to = "year", values_to = "benefits") %>%
+    mutate(benefits = benefits*1000000)
 
 ggplot(data_benefit_authority_long_weighted, 
        aes(x=year, y=benefits, group = local_authority, color = local_authority)) +
@@ -118,5 +151,3 @@ ggplot(data_benefit_authority_long_weighted,
 
 
 ```
-
-
