@@ -1,0 +1,112 @@
+---
+title: "02-figures-final"
+author: "Juliane Kloidt"
+date: "2025-12-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Set Up
+```{r}
+# set the workspace path to the directory containing this script
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# clear the environment
+rm(list=ls())
+
+library(tidyverse)
+library(sf)
+library(viridis)
+
+# co-benefit data (Scotland only)
+data <- read_csv("data/data-scotland.csv") %>%
+  select(-c(damage_pathway, damage_type, households, nation))
+
+# SIMD data (plus spatial data for Glasgow City)
+Ggrid <- st_read("data/SG_SIMD_2020.shx")
+Ggrid_glasgow <- Ggrid %>% filter(LAName == "Glasgow City")
+```
+
+```{r}
+data_test <- data %>% select(small_area, `co-benefit_type`, sum, population, local_authority)
+```
+
+
+# The Net Paradox
+## Cleveland Dot Plot
+```{r}
+data_benefit_local <- data %>% 
+  rowwise() %>% 
+  mutate(weighted = sum/population) %>%
+  select(local_authority, `co-benefit_type`, weighted) %>%
+  group_by(local_authority, `co-benefit_type`) %>%
+  summarise(weighted = sum(weighted, na.rm = TRUE)) %>%
+  #summarize(across(where(is.numeric), \(x) sum(x, na.rm = TRUE))) %>%
+  ungroup()
+
+gross_benefit <- data_benefit_local %>% 
+  filter(weighted >= 0) %>%
+  group_by(local_authority) %>%
+  summarise(gross_benefit = sum(weighted, na.rm = TRUE)) %>%
+  ungroup()
+
+net_benefit <- data_benefit_local %>%
+  group_by(local_authority) %>%
+  summarise(net_benefit = sum(weighted, na.rm = TRUE)) %>%
+  ungroup()
+
+fig1_data <- inner_join(gross_benefit, net_benefit) %>%
+  pivot_longer(cols=c(gross_benefit, net_benefit), names_to = "benefit_type", values_to = "value")
+
+ggplot(fig1_data, aes(x=value, y=local_authority))+
+  geom_line(aes(group = local_authority))+
+  geom_point(aes(colour = benefit_type))+
+  xlab("Sum of Co-Benefits per person until 2050 (Million GBP)") +
+  theme(axis.title.y = element_blank())
+
+```
+
+# The Divide
+
+# Glasgow
+```{r}
+data_sum <-data %>% 
+  filter(local_authority=="Glasgow City") %>%
+  rowwise() %>%
+  mutate(weighted = (sum/population)) %>%
+  group_by(local_authority, small_area, population) %>%
+  summarize(weighted=sum(weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+grid_glasgow_sum <- left_join(Ggrid_glasgow, data_sum)
+
+ggplot(grid_glasgow_sum) +
+  geom_sf(mapping = aes(fill=weighted), color="white")+
+# THE HIGHER THE SUM THE MORE BENEFITS
+  scale_fill_viridis(
+    option = "magma",
+    name = "Co-Benefits in GBP",
+    alpha = 0.8, # make fill a bit brighter
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F # display highest co-benefits on top
+  )) +
+  labs(x = NULL, y = NULL,
+         title = "Eleven Co-Benefits per Capita",
+         subtitle = "Scotland's Co-Benefits from Reaching Net Zero, 2025 to 2050"
+       )
+
+ggsave(filename = "figures/fig-map-glasgow-ALL-FACTORS.png", bg="white", width = 180, height = 120, units = "mm")
+
+
+```
