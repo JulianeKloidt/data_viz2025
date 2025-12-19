@@ -69,19 +69,19 @@ ggplot(fig1_data, aes(x=value, y=reorder(local_authority, value)))+
   geom_point(aes(colour = benefit_type))+
   labs(x = "Co-Benefits per Capita (Million GBP)", y = NULL,
        title = "Major Cities Benefit Most from Net Zero, But Pay the Highest Hassle Tax", 
-       subtitle = "Gross vs. Net Co-Benefits from Reaching Net Zero, 2025 to 2050", 
+       subtitle = "Gross vs. Net Co-Benefits per Capita across Scottish Local Authorities, 2025 to 2050", 
        caption = "Scotland's major cities are positioned to reap the largest rewards from the Net Zero transition.\nYet, they also face the steepest barriers, with a significant 'hassle gap' between gross potential and net gain.")+
   scale_color_manual(labels = c("Gross Co-Benefits = Benefits", 
-                                "Net Co-Benefits= Benefits - Hassle Costs"), 
+                                "Net Co-Benefits= Benefits - Costs"), 
                      values = c("grey60", "orange"))+
   theme(legend.title = element_blank(),
         legend.position = "inside",
-        legend.position.inside = c(0.7, 0.2),
+        legend.position.inside = c(0.8, 0.1),
         plot.title.position =  "plot" ,
         plot.caption.position =  "plot",
-        plot.caption = element_text(hjust = 0, color = "grey60"))
+        plot.caption = element_text(hjust = 0, color = "grey50"))
 
-ggsave(filename = "figures/fig1-hassle-gap.png", bg="white", width = 180, height = 120, units = "mm")
+ggsave(filename = "figures/fig1-hassle-gap.png", bg="white", width = 180, height = 140, units = "mm")
 ```
 
 ## 2. What Drives the Urban Gain?
@@ -139,7 +139,7 @@ ggplot(grid_glasgow_sum) +
 # THE HIGHER THE SUM THE MORE BENEFITS
   scale_fill_viridis(
     option = "magma",
-    name = "Co-Benefits in GBP",
+    name = "Co-Benefits\nper Capita\n(GBP)",
     alpha = 0.8, # make fill a bit brighter
     begin = 0.1, 
     end = 0.9,
@@ -151,11 +151,15 @@ ggplot(grid_glasgow_sum) +
      reverse = F # display highest co-benefits on top
   )) +
   labs(x = NULL, y = NULL,
-         title = "Glasgow City's Co-Benefits per Capita",
-         subtitle = "Sum of Co-Benefits from Reaching Net Zero, 2025 to 2050"
-       )
+         title = "The Co-Benefits of Net Zero are Higher in Wealthier Areas",
+         subtitle = "Glasgow City's Co-Benefits per Capita across Small Areas, 2025 to 2050",
+       caption = "Zooming into Glasgow, the city with the highest average net benefit, reveals a fractured landscape. The rewards\nof the transition are not being shared equally but disproportionately accrue in the least deprived neighbourhoods."
+       )+
+  theme(plot.title.position =  "plot" ,
+        plot.caption.position =  "plot",
+        plot.caption = element_text(hjust = 0, color = "grey50"))
 
-ggsave(filename = "figures/fig-map-glasgow-ALL-FACTORS.png", bg="white", width = 180, height = 120, units = "mm")
+ggsave(filename = "figures/fig3-glasgow-inequal.png", bg="white", width = 180, height = 140, units = "mm")
 
 
 ```
