@@ -184,14 +184,21 @@ grid_glasgow_cold <- left_join(Ggrid_glasgow, data_cold)
 
 ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted)) +
   theme_classic()+
-  geom_jitter() +
-  geom_smooth(method="lm") +
-  labs(x = "SIMD Percentile", y = "Co-Benefits from Reducing Excess Cold",
-         title = "Glasgow City's Co-Benefits per Capita",
-         subtitle = "Sum of Co-Benefits from Reaching Net Zero, 2025 to 2050"
-       )
+  geom_jitter(color="darkblue") +
+  geom_smooth(method="lm", color="darkred") +
+  labs(x = "Scottish Index of Multiple Deprivation (%)", y = "Reduction in Excess Cold per Capita (GBP)",
+         title = "Reducing Excess Cold benefits Least Deprived Neighbourhoods",
+         subtitle = "Benefits from Reducing Excess Cold (2025 to 2050) vs. Deprivation across Glasgow's Small Areas",
+       caption = "Instead of targeting fuel poverty in the most deprived areas, current retrofit pathways are projected to deliver the greatest health\nbenefits to the city's wealthiest residents, likely due to the high cost of treating grand, older tenement stock."
+       )+
+  theme(plot.title.position =  "plot" ,
+        plot.caption.position =  "plot",
+        plot.caption = element_text(hjust = 0, color = "grey50"))
+
+ggsave(filename = "figures/fig4-glasgow-inequal-housing.png", bg="white", width = 180, height = 140, units = "mm")
 ```
 
+## Additional Plots
 ```{r}
 data_damp <- data %>% filter(`co-benefit_type`=="dampness") %>%
   filter(local_authority=="Glasgow City") %>%
