@@ -111,6 +111,9 @@ ggsave(filename = "figures/fig1-urban-burden.png", bg="white", width = 180, heig
 LA <- c("Angus", "East Renfrewshire", "East Dunbartonshire",
         "Glasgow City", "Moray", "Scottish Borders")
 
+top3 <- c("Angus", "East Renfrewshire", "East Dunbartonshire")
+bottom3 <- c("Glasgow City", "Moray", "Scottish Borders")
+
 fig2 <- data3 %>%
   filter(local_authority %in% LA) %>%
   select(local_authority, population, physical_activity, 
@@ -126,9 +129,15 @@ fig2 <- data3 %>%
   select(-c(population, physical_activity, air_quality, noise, excess_cold, diet_change)) %>%
   pivot_longer(cols = c(activity_weighted, air_weighted, noise_weighted, cold_weighted, diet_weighted),
                names_to = "co_benefit", values_to = "weighted") %>%
-  ggplot(., aes(y=weighted, x=local_authority, fill = reorder(co_benefit, weighted))) +
+  mutate(weighted = round(weighted))%>%
+  mutate(divider = case_when(local_authority %in% top3 ~ "Top 3 Beneficiaries",
+                             local_authority %in% bottom3 ~ "Bottom 3 Beneficiaries")) %>%
+  ggplot(., aes(y=weighted, x=local_authority, fill = reorder(co_benefit, weighted),
+                label = weighted)) +
   theme_classic()+
   geom_bar(stat = "identity", position = "stack") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  facet_grid(~divider, scales = "free", space = "free") +
   theme(
         axis.title.x = element_blank(), 
         axis.title.y = element_blank(),
@@ -145,14 +154,24 @@ fig2 <- data3 %>%
                                 "Improved Air Quality", "Reduced Noise",
                                 "Increased Physical Activity"), 
                      values = c("#fbb61a", "#ed4a89", "#35b779", "#21918c", "#31688e"))+
-  labs(title = "Glasgow's co-benefits are driven by transport-related gains, not by welfare benefits", 
-       subtitle = "Top 5 Co-Benefits in Glasgow City and Selected Local Authorities, 2025 to 2050", 
-       caption = "Glasgow's high overall benefit is overwhelmingly driven by transport-related gains like physical activity. Crucial welfare benefits,\nsuch as reduced excess cold from housing retrofits, make up a much smaller share of the city's success story.")
+  labs(title = "The Composition Gap: Why Cities Lag", 
+       subtitle = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050", 
+       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car dependency, translating into high scores for physical activity and air quality. In cities where public transport use is already higher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
 
 fig2
 
 ggsave(filename = "figures/fig2-proportion-benefits.png", bg="white", 
        width = 180, height = 140, units = "mm")
+
+
+```
+
+```{r}
+LA <- c("Angus", "East Renfrewshire", "East Dunbartonshire",
+        "Glasgow City", "Moray", "Scottish Borders")
+
+top3 <- c("Angus", "East Renfrewshire", "East Dunbartonshire")
+bottom3 <- c("Glasgow City", "Moray", "Scottish Borders")
 
 mosaic <- data3 %>%
   filter(local_authority %in% LA) %>%
@@ -169,17 +188,39 @@ mosaic <- data3 %>%
   select(-c(population, physical_activity, air_quality, noise, excess_cold, diet_change)) %>%
   pivot_longer(cols = c(activity_weighted, air_weighted, noise_weighted, cold_weighted, diet_weighted),
                names_to = "co_benefit", values_to = "weighted") %>%
-  mutate(weight_integer = round(weighted))
+  mutate(divider = case_when(local_authority %in% top3 ~ "Top 3 Local Authorities",
+                             local_authority %in% bottom3 ~ "Bottom 3 Local Authorities"))
 
+# make integer
 mosaic$weighted <- as.integer(mosaic$weighted)
-mosaic$co_benefit <- as.factor(mosaic$co_benefit,
-                               levels=c(activity_weighted, air_weighted,
-                                        noise_weighted,
-                                        cold_weighted, diet_weighted))
-  
+# make count
+mosaic <- mosaic %>% uncount(weighted, .remove = TRUE, .id = NULL)
+
+# factorise and rename observations
+mosaic$divider <- factor(mosaic$divider,
+                         levels = c("Top 3 Local Authorities", "Bottom 3 Local Authorities"))
+
+mosaic$local_authority <- gsub("East Renfrewshire", "East\nRenfrewshire", mosaic$local_authority)
+mosaic$local_authority <- gsub("East Dunbartonshire", "East\nDunbartonshire", mosaic$local_authority)
+
+mosaic$co_benefit <- gsub("activity_weighted", "Physical Activity", mosaic$co_benefit)
+mosaic$co_benefit <- gsub("air_weighted", "Air Quality", mosaic$co_benefit)
+mosaic$co_benefit <- gsub("noise_weighted", "Noise", mosaic$co_benefit)
+mosaic$co_benefit <- gsub("cold_weighted", "Excess Cold", mosaic$co_benefit)
+mosaic$co_benefit <- gsub("diet_weighted", "Diet Change", mosaic$co_benefit)
+
+mosaic$co_benefit <- factor(mosaic$co_benefit,
+                               levels=c("Physical Activity", "Air Quality",
+                                        "Noise", "Excess Cold",
+                                        "Diet Change"))
+
+# plot
 ggplot(mosaic) +
   geom_mosaic(aes(x=product(co_benefit, local_authority), fill = co_benefit),
               divider=c("vspine", "hbar")) +
+  #geom_mosaic_text(aes(x=product(co_benefit, local_authority), fill = co_benefit))+
+  #geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  facet_grid(~divider, scales = "free", space = "free")+
   theme_classic() +
   theme(
         axis.title.x = element_blank(), 
@@ -192,13 +233,19 @@ ggplot(mosaic) +
         plot.background = element_rect(fill = "#f6f5f4",color = NA),
         plot.margin = unit(c(.5, .5, .2, .5), "cm"),
         legend.background = element_rect(fill = "#f6f5f4",color = NA),
-        panel.background = element_rect(fill = "#f6f5f4",color = NA))+
+        panel.background = element_rect(fill = "#f6f5f4",color = NA),
+        strip.background = element_rect(fill = "#f6f5f4",color = NA))+
   scale_fill_manual(labels = c("Diet Change", "Reduced Excess Cold", 
                                 "Improved Air Quality", "Reduced Noise",
                                 "Increased Physical Activity"), 
-                     values = c("#fbb61a", "#ed4a89", "#35b779", "#21918c", "#31688e"))
-```
+                     values = c("#31688e", "#21918c", "#35b779", "#ed4a89", "#fbb61a"))+
+  labs(title = "The Composition Gap: Why Cities Lag", 
+       subtitle = "Five Highest Co-Benefits per Capita in the Top and Bottom Beneficiaries, 2025 to 2050", 
+       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car\ndependency, translating into high scores for physical activity and air quality. In cities where public transport use is already\nhigher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
 
+ggsave(filename = "figures/fig2-proportion-benefits.png", bg="white", 
+       width = 180, height = 140, units = "mm")
+```
 
 ## 3. The Internal Fracture: Wealth-Concentrated Rewards
 
@@ -271,7 +318,7 @@ fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)
   geom_smooth(method="lm", color="#ed4a89") +
   labs(x = "Scottish Index of Multiple Deprivation (SIMD Percentile)", y = "Reduction in Excess Cold",
          title = "Co-Benefit Inequalities: The Housing Anomaly",
-         subtitle = "Reducing Excess Cold (2025 to 2050) vs. Multiple Deprivation across Glasgow's Data Zones (2020)",
+         subtitle = "Reducing Excess Cold (2025 to 2050) vs. Multiple Deprivation (2020) across Glasgow's Data Zones",
        caption = "The most damning evidence of this equity gap is found in the housing sector. Statistically, the health-related benefit of reducing\n'Excess Cold' is positively correlated with affluence (SIMD Percentile). This suggests that current retrofit pathways prioritize\nhigh-value, hard-to-treat historic tenement stock in wealthy areas, effectively bypassing those suffering from the most acute\nfuel poverty."
        )+
   theme(plot.title.position =  "plot" ,
