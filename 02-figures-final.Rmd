@@ -24,11 +24,6 @@ library(patchwork)
 library(ggmosaic)
 
 # co-benefit data (Scotland only)
-#data <- read_csv("data/data-scotland.csv") %>%
-#  select(-c(damage_pathway, damage_type, households, nation))
-
-#data2 <- read_csv("data/data2-scotland.csv")
-
 data3 <- read_csv("data/data3-scotland.csv")
 
 # SIMD data (plus spatial data for Glasgow City)
@@ -69,7 +64,7 @@ fig1_data <- inner_join(gross_benefit, net_benefit) %>%
 
 fig1 <- ggplot(fig1_data, aes(x=value, y=reorder(local_authority, -rowid)))+
   theme_classic()+
-  geom_line(aes(group = local_authority))+
+  geom_line(aes(group = local_authority), color="#3e4989")+
   geom_point(aes(colour = benefit_type))+
   labs(x = "Co-Benefits per Capita (GBP)", y = NULL,
        title = "Gross Potential vs. Net Gain per Capita across Scottish Local Authorities, 2025 to 2050")+
@@ -150,10 +145,14 @@ fig2 <-ggplot(fig2_data, aes(y=weighted, x=local_authority,
                              fill = reorder(co_benefit, weighted),label = weighted)) +
   theme_classic()+
   geom_bar(stat = "identity", position = "stack") +
-  geom_text(size = 2.5, position = position_stack(vjust = 0.5), color="white")+
+  geom_text(size = 2.5, position = position_stack(vjust = 0.4), color="white")+
   facet_grid(~divider, scales = "free", space = "free") +
   theme(axis.title.x = element_blank(), 
-        #axis.title.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        strip.text.x = element_text(size=12, face = "bold", color = "#3b3a34"),
         legend.title = element_blank(),
         plot.title.position =  "plot" ,
         plot.caption.position =  "plot",
@@ -164,116 +163,34 @@ fig2 <-ggplot(fig2_data, aes(y=weighted, x=local_authority,
         legend.background = element_rect(fill = "#f6f5f4",color = NA),
         panel.background = element_rect(fill = "#f6f5f4",color = NA),
         strip.background = element_rect(fill = "#f6f5f4",color = NA))+
-  scale_fill_manual(labels = c("Diet Change", "Excess Cold Reduction", 
-                                "Air Quality", "Noise Reduction",
-                                "Physical Activity"), 
+  scale_fill_manual(labels = c("Diet Change", "Excess Cold\nReduction", 
+                                "Air Quality", "Noise\nReduction",
+                                "Physical\nActivity"), 
                      values = c("#ed6925", "#ed4a89", "#26828e", "#31688e", "#3e4989"))+
-  labs(y = "Co-Benefits per Capita (GBP)",
-    title = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050")
+  labs(y = NULL,
+    title = "Composition of per Capita Gains (GBP) in the Top and Bottom Local Authorities, 2025 to 2050")
 
 fig2
 
 ggsave(filename = "figures/fig2-proportion-benefits.png", bg="white", 
-       width = 210, height = 120, units = "mm")
+       width = 210, height = 140, units = "mm")
 
 #######################
 # fig2 with caption and title
 
-fig2_legend <- fig2 +
+fig2_caption <- fig2 +
   labs(title = "The Composition Gap: Why Cities Lag", 
-    subtitle = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050", 
-       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car dependency, translating into high scores for physical activity and air quality. In cities where public transport use is already higher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
+    subtitle = "Composition of per Capita Gains (GBP) in the Top and Bottom Local Authorities, 2025 to 2050", 
+       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car dependency, translating into\nhigh scores for physical activity and air quality. In cities where public transport use is already higher, the 'delta' for improvement is smaller, making\nthe transition high-effort but relatively lower-reward on a per-person basis.")
 
-fig2_legend
+fig2_caption
 
+ggsave(filename = "figures/fig2-proportion-benefits-caption.png", bg="white", 
+       width = 210, height = 120, units = "mm")
 
-
-```
-
-```{r}
-LA <- c("Angus", "East Renfrewshire", "East Dunbartonshire",
-        "Glasgow City", "Moray", "Scottish Borders")
-
-top3 <- c("Angus", "East Renfrewshire", "East Dunbartonshire")
-bottom3 <- c("Glasgow City", "Moray", "Scottish Borders")
-
-mosaic <- data3 %>%
-  filter(local_authority %in% LA) %>%
-  select(local_authority, population, physical_activity, 
-         air_quality, noise, excess_cold, diet_change) %>%
-  group_by(local_authority) %>%
-  summarize(across(where(is.numeric), \(x) sum(x, na.rm = TRUE))) %>%
-  rowwise() %>%
-  mutate(activity_weighted = (physical_activity/population)*1000000,
-         air_weighted = (air_quality/population)*1000000,
-         noise_weighted = (noise/population)*1000000,
-         cold_weighted = (excess_cold/population)*1000000,
-         diet_weighted = (diet_change/population)*1000000) %>%
-  select(-c(population, physical_activity, air_quality, noise, excess_cold, diet_change)) %>%
-  pivot_longer(cols = c(activity_weighted, air_weighted, noise_weighted, cold_weighted, diet_weighted),
-               names_to = "co_benefit", values_to = "weighted") %>%
-  mutate(divider = case_when(local_authority %in% top3 ~ "Top 3 Local Authorities",
-                             local_authority %in% bottom3 ~ "Bottom 3 Local Authorities"))
-
-# make integer
-mosaic$weighted <- as.integer(mosaic$weighted)
-# make count
-mosaic <- mosaic %>% uncount(weighted, .remove = TRUE, .id = NULL)
-
-# factorise and rename observations
-mosaic$divider <- factor(mosaic$divider,
-                         levels = c("Top 3 Local Authorities", "Bottom 3 Local Authorities"))
-
-mosaic$local_authority <- gsub("East Renfrewshire", "East\nRenfrewshire", mosaic$local_authority)
-mosaic$local_authority <- gsub("East Dunbartonshire", "East\nDunbartonshire", mosaic$local_authority)
-
-mosaic$co_benefit <- gsub("activity_weighted", "Physical Activity", mosaic$co_benefit)
-mosaic$co_benefit <- gsub("air_weighted", "Air Quality", mosaic$co_benefit)
-mosaic$co_benefit <- gsub("noise_weighted", "Noise", mosaic$co_benefit)
-mosaic$co_benefit <- gsub("cold_weighted", "Excess Cold", mosaic$co_benefit)
-mosaic$co_benefit <- gsub("diet_weighted", "Diet Change", mosaic$co_benefit)
-
-mosaic$co_benefit <- factor(mosaic$co_benefit,
-                               levels=c("Physical Activity", "Air Quality",
-                                        "Noise", "Excess Cold",
-                                        "Diet Change"))
-
-# plot
-ggplot(mosaic) +
-  geom_mosaic(aes(x=product(co_benefit, local_authority), fill = co_benefit),
-              divider=c("vspine", "hbar")) +
-  #geom_mosaic_text(aes(x=product(co_benefit, local_authority), fill = co_benefit))+
-  #geom_text(size = 3, position = position_stack(vjust = 0.5))+
-  facet_grid(~divider, scales = "free", space = "free")+
-  theme_classic() +
-  theme(
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        legend.position = "none",
-        plot.title.position =  "plot" ,
-        plot.caption.position =  "plot",
-        text = element_text(color = "#3b3a34"),
-        plot.caption = element_text(hjust = 0, color = "#706e63"),
-        plot.background = element_rect(fill = "#f6f5f4",color = NA),
-        plot.margin = unit(c(.5, .5, .2, .5), "cm"),
-        legend.background = element_rect(fill = "#f6f5f4",color = NA),
-        panel.background = element_rect(fill = "#f6f5f4",color = NA),
-        strip.background = element_rect(fill = "#f6f5f4",color = NA))+
-  scale_fill_manual(labels = c("Diet Change", "Reduced Excess Cold", 
-                                "Improved Air Quality", "Reduced Noise",
-                                "Increased Physical Activity"), 
-                     values = c("#31688e", "#21918c", "#35b779", "#ed4a89", "#fbb61a"))+
-  labs(title = "The Composition Gap: Why Cities Lag", 
-       subtitle = "Five Highest Co-Benefits per Capita in the Top and Bottom Beneficiaries, 2025 to 2050", 
-       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car\ndependency, translating into high scores for physical activity and air quality. In cities where public transport use is already\nhigher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
-
-ggsave(filename = "figures/fig2-proportion-benefits.png", bg="white", 
-       width = 180, height = 140, units = "mm")
 ```
 
 ## 3. The Internal Fracture: Wealth-Concentrated Rewards
-
-**Caption.** Zooming into Glasgow, the city with the nation's lowest average net gain, reveals a stark geographical divide. Mapping the total co-benefits across small areas (Data Zones) shows that the rewards of the transition are not reaching deprived communities. Instead, they are disproportionately concentrated in the city’s most affluent pockets, such as the West End.
 
 ```{r}
 data_sum <- data3 %>%
@@ -287,11 +204,10 @@ grid_glasgow_sum <- left_join(Ggrid_glasgow, data_sum)
 fig3 <- ggplot(grid_glasgow_sum) +
   geom_sf(mapping = aes(fill=weighted), color="white")+
   theme_void()+
-# THE HIGHER THE SUM THE MORE BENEFITS
   scale_fill_viridis(
     option = "magma",
     name = "Co-Benefits\nper Capita\n(GBP)",
-    alpha = 0.8, # make fill a bit brighter
+    alpha = 0.8,
     begin = 0.1, 
     end = 0.9,
     discrete = F,
@@ -302,10 +218,7 @@ fig3 <- ggplot(grid_glasgow_sum) +
      reverse = F # display highest co-benefits on top
   )) +
   labs(x = NULL, y = NULL,
-         title = "The Internal Fracture: Wealth-Concentrated Rewards",
-         subtitle = "Glasgow City's Co-Benefits per Capita across Data Zones, 2025 to 2050",
-       caption = "Zooming into Glasgow, the city with the nation's lowest average net gain, reveals a stark geographical divide.\nMapping the total co-benefits across small areas (Data Zones) shows that the rewards of the transition are not\nreaching deprived communities. Instead, they are disproportionately concentrated in the city’s most affluent\npockets, such as the West End."
-       )+
+         title = "Glasgow City's Co-Benefits per Capita across Data Zones, 2025 to 2050")+
   theme(plot.title.position =  "plot" ,
         plot.caption.position =  "plot",
         text = element_text(color = "#3b3a34"),
@@ -315,18 +228,32 @@ fig3 <- ggplot(grid_glasgow_sum) +
 
 fig3
 
-ggsave(filename = "figures/fig3-glasgow-inequal.png", bg="white", width = 180, height = 140, units = "mm")
+ggsave(filename = "figures/fig3-glasgow-inequal.png", 
+       bg="white", width = 180, height = 120, units = "mm")
+
+#######################
+# fig3 with caption and title
+
+fig3_caption <- fig3 +
+  labs(title = "The Internal Fracture: Wealth-Concentrated Rewards",
+         subtitle = "Glasgow City's Co-Benefits per Capita across Data Zones, 2025 to 2050",
+       caption = "Zooming into Glasgow, the city with the nation's lowest average net gain, reveals a stark geographical divide.\nMapping the total co-benefits across small areas (Data Zones) shows that the rewards of the transition are not\nreaching deprived communities. Instead, they are disproportionately concentrated in the city’s most affluent\npockets, such as the West End."
+       )
+
+fig3_caption
+
+ggsave(filename = "figures/fig3-glasgow-inequal-caption.png", 
+       bg="white", width = 180, height = 120, units = "mm")
+
 ```
 
 ## 4. The Smoking Gun: The Housing Anomaly
 
-**Caption.** The evidence for housing is damning. Instead of targeting fuel poverty in the most deprived areas, current retrofit pathways are projected to deliver the greatest health benefits to the city's wealthiest residents, likely due to the high cost of treating grand, older tenement stock.
-
 ```{r}
-data_cold <- data %>% filter(`co-benefit_type`=="excess_cold") %>%
+data_cold <- data3 %>% select(local_authority, small_area, population, excess_cold)%>%
   filter(local_authority=="Glasgow City") %>%
   rowwise() %>%
-  mutate(sum_weighted = (sum/population)*1000000) %>%
+  mutate(sum_weighted = (excess_cold/population)*1000000) %>%
   group_by(small_area, population) %>%
   summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
   ungroup() %>%
@@ -335,11 +262,10 @@ data_cold <- data %>% filter(`co-benefit_type`=="excess_cold") %>%
 
 grid_glasgow_cold <- left_join(Ggrid_glasgow, data_cold)
 
-
 fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)) +
   theme_classic()+
   geom_jitter() +
-  geom_smooth(method="lm", color="#ed4a89") +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
   labs(x = "Scottish Index of Multiple Deprivation (SIMD Percentile)", y = "Reduction in Excess Cold",
          title = "Co-Benefit Inequalities: The Housing Anomaly",
          subtitle = "Reducing Excess Cold (2025 to 2050) vs. Multiple Deprivation (2020) across Glasgow's Data Zones",
@@ -355,8 +281,8 @@ fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)
         panel.background = element_rect(fill = "#f6f5f4",color = NA))+
   scale_color_viridis(
     option = "magma",
-    name = "Co-Benefits\nper Capita\n(GBP)",
-    alpha = 0.8, # make fill a bit brighter
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
     begin = 0.1, 
     end = 0.9,
     discrete = F,
@@ -364,7 +290,7 @@ fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)
     guide = guide_colorbar(
      keyheight = unit(30, units = "mm"),
      title.position = "top",
-     reverse = F # display highest co-benefits on top
+     reverse = F
   )) 
 
 fig4
@@ -373,6 +299,7 @@ ggsave(filename = "figures/fig4-glasgow-inequal-housing.png", bg="white", width 
 ```
 
 ## Additional Plots
+Make sure the argument for figure 4 holds up when considering related, less influential co-benefits.
 ```{r}
 data_damp <- data %>% filter(`co-benefit_type`=="dampness") %>%
   filter(local_authority=="Glasgow City") %>%
@@ -413,45 +340,5 @@ ggplot(grid_glasgow_heat, aes(x=Percentv2, y = weighted)) +
   geom_jitter() +
   geom_smooth(method="lm") +
   ylab("Co-Benefits from Reducing Excess Heat") + xlab("SIMD Percentile")
-```
-
-```{r}
-data_diet <- data %>% filter(`co-benefit_type`=="diet_change") %>%
-  filter(local_authority=="Glasgow City") %>%
-  rowwise() %>%
-  mutate(sum_weighted = (sum/population)*1000000) %>%
-  group_by(small_area, population) %>%
-  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  rename("DataZone" = "small_area") %>%
-  select(DataZone, population, weighted)
-
-grid_glasgow_diet <- left_join(Ggrid_glasgow, data_diet)
-
-
-ggplot(grid_glasgow_diet, aes(x=Percentv2, y = weighted)) +
-  theme_classic()+
-  geom_jitter() +
-  geom_smooth(method="lm") +
-  ylab("Co-Benefits from Diet Changes") + xlab("SIMD Percentile")
-```
-
-# Colors
-```{r}
-"#d4d3ce"
-"#b1b0a6"
-"#939184"
-"#4a4941"
-"#3b3a34"
-
-
-
-```
-
-# Patchwork Plot
-```{r}
-fig1 + fig2 + fig3 + fig4 +
-  plot_layout(ncol=2, widths = c(3, 2))
-
 ```
 
