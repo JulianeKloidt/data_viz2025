@@ -24,10 +24,10 @@ library(patchwork)
 library(ggmosaic)
 
 # co-benefit data (Scotland only)
-data <- read_csv("data/data-scotland.csv") %>%
-  select(-c(damage_pathway, damage_type, households, nation))
+#data <- read_csv("data/data-scotland.csv") %>%
+#  select(-c(damage_pathway, damage_type, households, nation))
 
-data2 <- read_csv("data/data2-scotland.csv")
+#data2 <- read_csv("data/data2-scotland.csv")
 
 data3 <- read_csv("data/data3-scotland.csv")
 
@@ -38,13 +38,7 @@ Ggrid_glasgow <- Ggrid %>% filter(LAName == "Glasgow City")
 
 # The Urban Dividend Gap: Unmasking Inequity in Scotland’s Net Zero Transition
 
-**Executive Summary**
-
-While reaching Net Zero is often framed as a universal win for public health and the economy, a granular analysis of Scottish co-benefit data reveals a troubling "Urban Lag." As Scotland moves toward 2050, our most populous cities face a double burden of lower per-capita gains and significantly higher transition friction. Within these cities, the distribution of rewards is fractured, with the most vital health benefits flowing toward the wealthiest residents rather than those in greatest need.
-
-## 1. The National Paradox: The Urban Double-Burden
-
-**Caption.** Analysis across Scotland's 32 local authorities reveals that major cities like Glasgow and Edinburgh are positioned at the bottom of the "Net Gain" rankings. These urban centers face lower per-capita co-benefit potential than car-dependent commuter belts like Angus or East Renfrewshire, yet they pay a similar "Hassle Tax" — the economic and behavioral friction associated with complex infrastructure changes.
+## 1. The Urban Burden: Major Cities benefit less from Net Zero but pay similar Hassle Tax
 
 ```{r fig 1, level 1 data}
 net_benefit <- data3 %>%
@@ -78,9 +72,7 @@ fig1 <- ggplot(fig1_data, aes(x=value, y=reorder(local_authority, -rowid)))+
   geom_line(aes(group = local_authority))+
   geom_point(aes(colour = benefit_type))+
   labs(x = "Co-Benefits per Capita (GBP)", y = NULL,
-       title = "Major Cities Benefit Less from Net Zero, But Pay Similar Hassle Tax", 
-       subtitle = "Gross Potential vs. Net Gain per Capita across Scottish Local Authorities, 2025 to 2050", 
-       caption = "Analysis across Scotland's 32 local authorities reveals that major cities like Glasgow and Edinburgh are positioned at the\nbottom of the 'Net Gain' rankings. These urban centers face lower per-capita co-benefit potential than car-dependent\ncommuter belts like Angus or East Renfrewshire, yet they pay a similar 'Hassle Tax', the economic\nand behavioural friction associated with complex infrastructure changes.")+
+       title = "Gross Potential vs. Net Gain per Capita across Scottish Local Authorities, 2025 to 2050")+
   scale_color_manual(labels = c("Gross Potential = Benefits", 
                                 "Net Gain = Benefits - Costs"), 
                      values = c("#939184", "#ed4a89"))+
@@ -98,23 +90,34 @@ fig1 <- ggplot(fig1_data, aes(x=value, y=reorder(local_authority, -rowid)))+
 
 fig1
 
-ggsave(filename = "figures/fig1-urban-burden.png", bg="white", width = 180, height = 140, units = "mm")
+ggsave(filename = "figures/fig1-urban-burden.png", 
+       bg="white", width = 210, height = 140, units = "mm")
+
+
+#######################
+# fig1 with caption and title
+fig1_caption <- fig1 +
+  labs(title = "Major Cities Benefit Less from Net Zero, But Pay Similar Hassle Tax",
+       subtitle = "Gross Potential vs. Net Gain per Capita across Scottish Local Authorities, 2025 to 2050",
+    caption = "Analysis across Scotland's 32 local authorities reveals that major cities like Glasgow and Edinburgh are positioned at the\nbottom of the 'Net Gain' rankings. These urban centers face lower per-capita co-benefit potential than car-dependent\ncommuter belts like Angus or East Renfrewshire, yet they pay a similar 'Hassle Tax', the economic\nand behavioural friction associated with complex infrastructure changes.")
+
+fig1_caption
+
+ggsave(filename = "figures/fig1-urban-burden-caption.png", 
+       bg="white", width = 210, height = 140, units = "mm")
 ```
 
 ## 2. The Composition Gap: Why Cities Lag
 
-**Caption.** Glasgow's high overall benefit is overwhelmingly driven by transport-related gains like physical activity. Crucial welfare benefits, such as reduced excess cold from housing retrofits, make up a much smaller share of the city's success story.
-
-*Note.* In very rural areas, the overall benefit is mostly driven by gains from physical activity. In urban areas, the overall benefit is driven by noise reduction and gains from increased physical activity.
-
 ```{r}
+# present top 3 and bottom 3 beneficiaries
 LA <- c("Angus", "East Renfrewshire", "East Dunbartonshire",
         "Glasgow City", "Moray", "Scottish Borders")
 
 top3 <- c("Angus", "East Renfrewshire", "East Dunbartonshire")
 bottom3 <- c("Glasgow City", "Moray", "Scottish Borders")
 
-fig2 <- data3 %>%
+fig2_data <- data3 %>%
   filter(local_authority %in% LA) %>%
   select(local_authority, population, physical_activity, 
          air_quality, noise, excess_cold, diet_change) %>%
@@ -130,17 +133,27 @@ fig2 <- data3 %>%
   pivot_longer(cols = c(activity_weighted, air_weighted, noise_weighted, cold_weighted, diet_weighted),
                names_to = "co_benefit", values_to = "weighted") %>%
   mutate(weighted = round(weighted))%>%
-  mutate(divider = case_when(local_authority %in% top3 ~ "Top 3 Beneficiaries",
-                             local_authority %in% bottom3 ~ "Bottom 3 Beneficiaries")) %>%
-  ggplot(., aes(y=weighted, x=local_authority, fill = reorder(co_benefit, weighted),
-                label = weighted)) +
+  mutate(divider = case_when(local_authority %in% top3 ~ "Top 3 Local Authorities",
+                             local_authority %in% bottom3 ~ "Bottom 3 Local Authorities"))
+
+fig2_data$local_authority <- 
+  gsub("East Renfrewshire", "East\nRenfrewshire", fig2_data$local_authority)
+fig2_data$local_authority <- 
+  gsub("East Dunbartonshire", "East\nDunbartonshire", fig2_data$local_authority)
+
+fig2_data$divider <- factor(fig2_data$divider,
+                         levels = c("Top 3 Local Authorities", "Bottom 3 Local Authorities"))
+
+
+
+fig2 <-ggplot(fig2_data, aes(y=weighted, x=local_authority, 
+                             fill = reorder(co_benefit, weighted),label = weighted)) +
   theme_classic()+
   geom_bar(stat = "identity", position = "stack") +
-  geom_text(size = 3, position = position_stack(vjust = 0.5))+
+  geom_text(size = 2.5, position = position_stack(vjust = 0.5), color="white")+
   facet_grid(~divider, scales = "free", space = "free") +
-  theme(
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
+  theme(axis.title.x = element_blank(), 
+        #axis.title.y = element_blank(),
         legend.title = element_blank(),
         plot.title.position =  "plot" ,
         plot.caption.position =  "plot",
@@ -149,19 +162,30 @@ fig2 <- data3 %>%
         plot.background = element_rect(fill = "#f6f5f4",color = NA),
         plot.margin = unit(c(.5, .5, .2, .5), "cm"),
         legend.background = element_rect(fill = "#f6f5f4",color = NA),
-        panel.background = element_rect(fill = "#f6f5f4",color = NA))+
-  scale_fill_manual(labels = c("Diet Change", "Reduced Excess Cold", 
-                                "Improved Air Quality", "Reduced Noise",
-                                "Increased Physical Activity"), 
-                     values = c("#fbb61a", "#ed4a89", "#35b779", "#21918c", "#31688e"))+
-  labs(title = "The Composition Gap: Why Cities Lag", 
-       subtitle = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050", 
-       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car dependency, translating into high scores for physical activity and air quality. In cities where public transport use is already higher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
+        panel.background = element_rect(fill = "#f6f5f4",color = NA),
+        strip.background = element_rect(fill = "#f6f5f4",color = NA))+
+  scale_fill_manual(labels = c("Diet Change", "Excess Cold Reduction", 
+                                "Air Quality", "Noise Reduction",
+                                "Physical Activity"), 
+                     values = c("#ed6925", "#ed4a89", "#26828e", "#31688e", "#3e4989"))+
+  labs(y = "Co-Benefits per Capita (GBP)",
+    title = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050")
 
 fig2
 
 ggsave(filename = "figures/fig2-proportion-benefits.png", bg="white", 
-       width = 180, height = 140, units = "mm")
+       width = 210, height = 120, units = "mm")
+
+#######################
+# fig2 with caption and title
+
+fig2_legend <- fig2 +
+  labs(title = "The Composition Gap: Why Cities Lag", 
+    subtitle = "Per Capita Gain for the 5 strongest Co-Benefits in the Top and Bottom Beneficiaries, 2025 to 2050", 
+       caption = "The disparity in potential is driven by baseline behaviors. High-gain areas benefit from massive shifts away from car dependency, translating into high scores for physical activity and air quality. In cities where public transport use is already higher, the 'delta' for improvement is smaller, making the transition high-effort but relatively lower-reward on a per-person basis.")
+
+fig2_legend
+
 
 
 ```
