@@ -1,7 +1,7 @@
 ---
-title: "02-figures-final"
+title: "02-data-viz-competition-2025"
 author: "Juliane Kloidt"
-date: "2025-12-18"
+date: "2025-12-30"
 output: html_document
 ---
 
@@ -24,7 +24,7 @@ library(patchwork)
 library(ggmosaic)
 
 # co-benefit data (Scotland only)
-data3 <- read_csv("data/data3-scotland.csv")
+data <- read_csv("data/data-scotland.csv")
 
 # SIMD data (plus spatial data for Glasgow City)
 Ggrid <- st_read("data/SG_SIMD_2020.shx")
@@ -36,7 +36,7 @@ Ggrid_glasgow <- Ggrid %>% filter(LAName == "Glasgow City")
 ## 1. The Urban Burden: Major Cities benefit less from Net Zero but pay similar Hassle Tax
 
 ```{r fig 1, level 1 data}
-net_benefit <- data3 %>%
+net_benefit <- data %>%
   select(small_area, local_authority, population, sum) %>%
   group_by(local_authority) %>%
   summarize(across(where(is.numeric), \(x) sum(x, na.rm = TRUE))) %>%
@@ -44,7 +44,7 @@ net_benefit <- data3 %>%
   select(-c(sum, population)) %>%
   ungroup()
 
-gross_benefit <- data3 %>%
+gross_benefit <- data %>%
   mutate(sum_gross = select(., c(air_quality, dampness:excess_heat, 
                                      noise: physical_activity)) %>% rowSums(na.rm = TRUE)) %>%
   select(small_area, local_authority, population, sum_gross) %>%
@@ -112,7 +112,7 @@ LA <- c("Angus", "East Renfrewshire", "East Dunbartonshire",
 top3 <- c("Angus", "East Renfrewshire", "East Dunbartonshire")
 bottom3 <- c("Glasgow City", "Moray", "Scottish Borders")
 
-fig2_data <- data3 %>%
+fig2_data <- data %>%
   filter(local_authority %in% LA) %>%
   select(local_authority, population, physical_activity, 
          air_quality, noise, excess_cold, diet_change) %>%
@@ -193,7 +193,7 @@ ggsave(filename = "figures/fig2-proportion-benefits-caption.png", bg="white",
 ## 3. The Internal Fracture: Wealth-Concentrated Rewards
 
 ```{r}
-data_sum <- data3 %>%
+data_sum <- data %>%
   filter(local_authority=="Glasgow City") %>%
   mutate(weighted = (sum/population)*1000000) %>%
   rename("DataZone" = "small_area") %>%
@@ -250,7 +250,7 @@ ggsave(filename = "figures/fig3-glasgow-inequal-caption.png",
 ## 4. The Smoking Gun: The Housing Anomaly
 
 ```{r}
-data_cold <- data3 %>% select(local_authority, small_area, population, excess_cold)%>%
+data_cold <- data %>% select(local_authority, small_area, population, excess_cold)%>%
   filter(local_authority=="Glasgow City") %>%
   rowwise() %>%
   mutate(sum_weighted = (excess_cold/population)*1000000) %>%
@@ -266,11 +266,8 @@ fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)
   theme_classic()+
   geom_jitter() +
   geom_smooth(method="lm", color="#ed4a89", fill="white") +
-  labs(x = "Scottish Index of Multiple Deprivation (SIMD Percentile)", y = "Reduction in Excess Cold",
-         title = "Co-Benefit Inequalities: The Housing Anomaly",
-         subtitle = "Reducing Excess Cold (2025 to 2050) vs. Multiple Deprivation (2020) across Glasgow's Data Zones",
-       caption = "The most damning evidence of this equity gap is found in the housing sector. Statistically, the health-related benefit of reducing\n'Excess Cold' is positively correlated with affluence (SIMD Percentile). This suggests that current retrofit pathways prioritize\nhigh-value, hard-to-treat historic tenement stock in wealthy areas, effectively bypassing those suffering from the most acute\nfuel poverty."
-       )+
+  labs(x = "Scottish Index of Multiple Deprivation (SIMD Percentile)", y = "Excess Cold Reduction (GBP)",
+         title = "Excess Cold Reduction (2025 to 2050) vs. Multiple Deprivation (2020) in Glasgow's Data Zones")+
   theme(plot.title.position =  "plot" ,
         plot.caption.position =  "plot",
         text = element_text(color = "#3b3a34"),
@@ -295,16 +292,29 @@ fig4 <- ggplot(grid_glasgow_cold, aes(x=Percentv2, y = weighted, color=weighted)
 
 fig4
 
-ggsave(filename = "figures/fig4-glasgow-inequal-housing.png", bg="white", width = 180, height = 140, units = "mm")
+ggsave(filename = "figures/fig4-glasgow-inequal-housing.png", bg="white", width = 210, height = 140, units = "mm")
+
+#######################
+# fig4 with caption and title
+
+fig4_caption <- fig4 +
+  labs(title = "Co-Benefit Inequalities: The Housing Anomaly",
+       subtitle = "Excess Cold Reduction (2025 to 2050) vs. Multiple Deprivation (2020) in Glasgow's Data Zones",
+       caption = "The most damning evidence of this equity gap is found in the housing sector. Statistically, the health-related benefit of reducing 'Excess Cold'\nis positively correlated with affluence (SIMD Percentile). This suggests that current retrofit pathways prioritize high-value, hard-to-treat historic\ntenement stock in wealthy areas, effectively bypassing those suffering from the most acute fuel poverty.")
+
+fig4_caption
+
+ggsave(filename = "figures/fig4-glasgow-inequal-housing-caption.png", bg="white", width = 210, height = 140, units = "mm")
+
 ```
 
 ## Additional Plots
-Make sure the argument for figure 4 holds up when considering related, less influential co-benefits.
+Check that the argument for Figure 4 is not contradicted by related co-benefit factors.
 ```{r}
-data_damp <- data %>% filter(`co-benefit_type`=="dampness") %>%
+data_damp <- data %>% select(local_authority, small_area, population,dampness) %>%
   filter(local_authority=="Glasgow City") %>%
   rowwise() %>%
-  mutate(sum_weighted = (sum/population)*1000000) %>%
+  mutate(sum_weighted = (dampness/population)*1000000) %>%
   group_by(small_area, population) %>%
   summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
   ungroup() %>%
@@ -322,10 +332,10 @@ ggplot(grid_glasgow_damp, aes(x=Percentv2, y = weighted)) +
 ```
 
 ```{r}
-data_heat <- data %>% filter(`co-benefit_type`=="excess_heat") %>%
+data_heat <- data %>% select(local_authority, small_area, population, excess_heat) %>%
   filter(local_authority=="Glasgow City") %>%
   rowwise() %>%
-  mutate(sum_weighted = (sum/population)*1000000) %>%
+  mutate(sum_weighted = (excess_heat/population)*1000000) %>%
   group_by(small_area, population) %>%
   summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
   ungroup() %>%
