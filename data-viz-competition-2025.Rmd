@@ -59,7 +59,7 @@ gross_benefit <- data %>%
   select(-c(sum_gross, population)) %>%
   ungroup()
 
-# cobmined data
+# combined data
 fig1_data <- inner_join(gross_benefit, net_benefit) %>%
   arrange(desc(net_benefit)) %>% rowid_to_column() %>%
   pivot_longer(cols=c(gross_benefit, net_benefit), 
@@ -162,7 +162,6 @@ fig2_data$divider <-
          levels = c("Top 3 Local Authorities", "Bottom 3 Local Authorities"))
 
 ```
-
 
 ```{r}
 # without caption
