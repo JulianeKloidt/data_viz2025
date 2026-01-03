@@ -6,131 +6,71 @@ editor_options:
 
 @readme
 
-# Data visualization competition
+# The Urban Dividend Gap: Unmasking Inequity in Scotland’s Net Zero Transition
 
-## The UK Co-Benefit Atlas
+This repository contains the data processing and visualization code for
+my entry into the [Data Lab Visualisation Competition
+2025](https://thedatalab.com/data-visualisation-competition-2025/). The
+project investigates the socio-economic distribution of climate action
+co-benefits across Scotland, identifying an "Urban Lag" and a regressive
+"Housing Anomaly" in current Net Zero projections.
 
-The [UK Co-Benefit Atlas](https://ukcobenefitsatlas.net), developed by
-the [Edinburgh Climate Change Institute](https://edinburghcentre.org) is
-an interactive visual interface for communicating the co-benefits of
-reaching net zero across the UK.
+## 📊 Project Overview
 
-Climate actions are designed to lower greenhouse gas (GHG) emissions but
-the gains for society reach further. The actions we need to undertake to
-reduce fossil fuel emissions often have significant and positive impacts
-on health, economy and society, as well as the environment. The team at
-ECCI have been modelling these wider benefits (‘co-benefits’) to make
-the positive case for climate action.
+While reaching Net Zero is often framed as a universal win, this
+analysis reveals that Scotland’s most populous cities face a "Double
+Burden": lower per-capita gains and a fractured distribution of rewards.
 
-These values are estimates of these wider socio-economic impacts from
-the UK reaching net zero by 2050. The data are monetised figures,
-representing the value to individuals and society across 11 co-benefit
-types from following the actions set out by the [UK Climate Change
-Committee](https://www.theccc.org.uk/publication/the-seventh-carbon-budget/).
-They represent improved quality of life, reduced air pollution, better
-health outcomes and safer, more comfortable homes. They have been
-modelled at the local level to include local context, for example
-rurality, wealth and demographics.
+### Key Findings
 
-*Note.* Information extracted from [The Data
-Lab](https://thedatalab.com/data-visualisation-competition-2025/).
+-   **The Urban Lag:** Major cities like Glasgow and Edinburgh show
+    lower net gains compared to car-dependent commuter belts.
 
-## Data questions
+-   **Compositional Disparity:** Cities show lower potential for "new"
+    physical activity gains because their baseline public transport
+    usage is already high.
 
-**Research Question 1:** How much does each Scottish local authority
-benefit from net zero?
+-   **The Housing Anomaly:** Vital health benefits from reducing "Excess
+    Cold" are positively correlated with neighborhood affluence (SIMD),
+    suggesting benefits are bypassing those in acute fuel poverty.
 
--   Which authorities benefit the most from reaching net zero? Are there
-    meaningful differences between groups of local authorities (e.g.,
-    urban vs. rural)?
+## 📂 Repository Structure
 
--   ***TO DO: plot the benefits per person for each local authority as a
-    map***
+-   `data-viz-competition-2025.Rmd`: R script used to generate the four
+    key visualizations.
 
-**Research Question 2:** When does each local authority benefit from net
-zero?
+-   `/data`: Processed `.csv` files and shapefiles (SIMD and Data Zone
+    boundaries).
 
--   Which authorities benefit at what time on the path to net zero?
-    Which authorities have an early pay-out, late pay-out, constant
-    pay-out? Are there meaningful differences between groups of local
-    authorities (e.g., urban vs. rural)?
+-   `/output`: High-resolution versions of the infographic figures and
+    accompanying data tables.
 
--   Do authorities need to invest up front, or do they get a pay out?
+## 🛠️ Installation & Usage
 
--   In what year does the local authority receive 25%, 50%, and 75% of
-    the pay out per person?
+1.  Clone this repository.
 
-**Research Question 3:** What should local authorities do with the
-money?
+2.  Ensure you have R installed with the following
+    libraries: `[tidyverse, sf, viridis]`.
 
--   How much does reaching net zero cost?
+3.  Run `data-viz-competition-2025.Rmd` to reproduce the figures.
 
-### Data specifications
+## 📈 Data Sources
 
-Only use data from Scotland (remove all English and Welsh local areas).
+The analysis is based on the following publicly available datasets:
 
-Present all results as money per person to make the findings more
-tangible.
+-   **Climate Co-benefits Data:** Edinburgh Climate Change Institute via
+    the [UK Co-Benefit Atlas](https://ukcobenefitsatlas.net).
 
-Different levels of data:
+-   **Scottish Index of Multiple Deprivation (SIMD) 2020:** Available
+    via the [Scottish
+    Government](https://www.spatialdata.gov.scot/geonetwork/srv/eng/catalog.search#/metadata/02866b0b-66e5-46ab-9b1c-d433dc3c2fae)
+    website.
 
--   **Geographical:** Scotland (g = 1), local authorities (g = 32),
-    small areas (g = 139,520)
+-   **Boundary Files:** Geographic Data Zone boundaries sourced
+    from [spatialdata.gov.scot](https://spatialdata.gov.scot/).
 
--   **Time:** across years (t = 1), each year (t = x)
+## ⚖️ License
 
--   **Factors:** across factors (f = 1), each factor (f = 11)
-
--   **People:** across the population, for each person
-
-## Exploratory Data Analysis
-
-**Co-benefits outweigh associated costs:** Across all Scottish local
-authorities, the sum of anticipated costs for reaching net zero is
-approximately XXX until 2050. In contrast, the sum of estimated benefits
-for reaching net zero is approximately XXX until 2050. Per person, the
-costs are XXX whereas the benefits are XXX.
-
-**Co-benefit ranking does not vary much (or at all) across Scottish
-local authorities:** Scottish local authorities receive most benefits
-from the same factors (i.e., physical acitivity, noise, air quality).
-Similarly, Scottish authorities face most costs from the same factors
-(i.e., hassle cost, congestion, road safety).
-
-**Total co-benefits per person from 2025 up until 2050:**
-
-| Mean     | Median   | SD      | Min      | Max      |
-|----------|----------|---------|----------|----------|
-| £2419.09 | £2343.76 | £365.21 | £1695.50 | £3195.00 |
-
-**Research questions: What? \> So what? \> Now what?**
-
-What? -what are the top 5 (top 3) co-benefits for different areas in
-Scotland? -split into urban vs rural -what are the top 5 (top 3)
-co-benefits that will introduce the most cost in Scotland?
-
-So what? -what types of benefits do we get in which areas? are there
-areas with more benefits than others? -every area in Scotland benefits
-from net zero, though to a different extent and through different
-pathways
-
-Now what? -can we make this more equal? can we supercharge from one area
-to another? -how can we supercharge some of them? \> can we do some sort
-of intervention to increase them? -can we map system-level interventions
-to co-benefits?
-
-############################################################################### 
-
-Boundaries: -Scotland only \> use `lookups.xlsx` to filter Scottish area
-codes -Add label/ classifier for urban, rural, and in-between? -get this
-from Dominik's dataset
-
-Notes: -some co-benefits are negative and some are positive? \> some
-factors represent benefits whereas others describe costs
-
-Comments: -top 5 (and top 3) co-benefits are the same across Scottish
-local authorities
-
-### Data Used
-
-I used the full, detailed dataset containing x variables and x rows.
+This project is licensed under the MIT License - see the `LICENSE` file
+for details. The data used is subject to the [Open Government Licence
+v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
