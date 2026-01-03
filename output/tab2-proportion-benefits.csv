@@ -1,0 +1,41 @@
+local_authority,co_benefit,weighted
+Angus,activity_weighted,2491
+Angus,air_weighted,714
+Angus,noise_weighted,944
+Angus,cold_weighted,120
+Angus,diet_weighted,75
+"East
+Dunbartonshire",activity_weighted,2070
+"East
+Dunbartonshire",air_weighted,708
+"East
+Dunbartonshire",noise_weighted,1205
+"East
+Dunbartonshire",cold_weighted,173
+"East
+Dunbartonshire",diet_weighted,75
+"East
+Renfrewshire",activity_weighted,2087
+"East
+Renfrewshire",air_weighted,708
+"East
+Renfrewshire",noise_weighted,1206
+"East
+Renfrewshire",cold_weighted,157
+"East
+Renfrewshire",diet_weighted,75
+Glasgow City,activity_weighted,737
+Glasgow City,air_weighted,707
+Glasgow City,noise_weighted,1262
+Glasgow City,cold_weighted,66
+Glasgow City,diet_weighted,75
+Moray,activity_weighted,1485
+Moray,air_weighted,720
+Moray,noise_weighted,669
+Moray,cold_weighted,113
+Moray,diet_weighted,75
+Scottish Borders,activity_weighted,1712
+Scottish Borders,air_weighted,722
+Scottish Borders,noise_weighted,624
+Scottish Borders,cold_weighted,112
+Scottish Borders,diet_weighted,75
