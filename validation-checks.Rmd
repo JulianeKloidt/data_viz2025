@@ -1,0 +1,441 @@
+---
+title: "validation-checks"
+author: "Juliane Kloidt"
+date: "2026-01-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Set Up
+```{r}
+# set the workspace path to the directory containing this script
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+
+# clear the environment
+rm(list=ls())
+
+library(tidyverse)
+library(sf)
+library(viridis)
+
+# aggregated co-benefit data (Scotland only)
+data <- read_csv("data/data-scotland.csv")
+
+# SIMD data (plus spatial data)
+Ggrid <- st_read("data/SG_SIMD_2020.shx")
+
+# subsets for Glasgow, Edinburgh, Aberdeen, and Dundee
+Ggrid_glasgow<- Ggrid %>% filter(LAName == "Glasgow City")
+Ggrid_edinburgh <- Ggrid %>% filter(LAName == "City of Edinburgh")
+Ggrid_aberdeen <- Ggrid %>% filter(LAName == "Aberdeen City")
+Ggrid_dundee <- Ggrid %>% filter(LAName == "Dundee City")
+```
+
+# Validation Checks
+
+## 1. Does 'Excess Cold' also correlate positively with 'Wealth' (higher SIMD percentile) in other Scottish Cities?
+
+### Edinburgh
+```{r figure 4 edinburgh data}
+data_cold <- data %>%
+  # only focus on excess cold for co-benefits
+  select(local_authority, small_area, population, excess_cold)%>%
+  # only focus on Data Zones in City of Edinburgh
+  filter(local_authority=="City of Edinburgh") %>%
+  rowwise() %>%
+  # weight net benefits by population for comparison
+  # data shows benefits in million GBP, transform into GBP
+  mutate(sum_weighted = (excess_cold/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+# combine with SIMD and geometries
+grid_edinburgh_cold <- left_join(Ggrid_edinburgh, data_cold)
+```
+
+```{r figure 4 edinburgh}
+fig4 <- ggplot(grid_edinburgh_cold, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Excess Cold Reduction (GBP)",
+    title = "Figure 4. Excess Cold Reduction vs. Multiple Deprivation across Edinburgh's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-edinburgh-cold.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+
+```
+
+### Aberdeen
+```{r figure 4 aberdeen data}
+data_cold <- data %>%
+  # only focus on excess cold for co-benefits
+  select(local_authority, small_area, population, excess_cold)%>%
+  # only focus on Data Zones in Aberdeen City
+  filter(local_authority=="Aberdeen City") %>%
+  rowwise() %>%
+  # weight net benefits by population for comparison
+  # data shows benefits in million GBP, transform into GBP
+  mutate(sum_weighted = (excess_cold/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+# combine with SIMD and geometries
+grid_aberdeen_cold <- left_join(Ggrid_aberdeen, data_cold)
+```
+
+```{r figure 4 aberdeen}
+fig4 <- ggplot(grid_aberdeen_cold, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Excess Cold Reduction (GBP)",
+    title = "Figure 4. Excess Cold Reduction vs. Multiple Deprivation across Aberdeen's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-aberdeen-cold.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+### Dundee
+```{r figure 4 dundee data}
+data_cold <- data %>%
+  # only focus on excess cold for co-benefits
+  select(local_authority, small_area, population, excess_cold)%>%
+  # only focus on Data Zones in Dundee City
+  filter(local_authority=="Dundee City") %>%
+  rowwise() %>%
+  # weight net benefits by population for comparison
+  # data shows benefits in million GBP, transform into GBP
+  mutate(sum_weighted = (excess_cold/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+# combine with SIMD and geometries
+grid_dundee_cold <- left_join(Ggrid_dundee, data_cold)
+```
+
+```{r figure 4 dundee}
+fig4 <- ggplot(grid_dundee_cold, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Excess Cold Reduction (GBP)",
+    title = "Figure 4. Excess Cold Reduction vs. Multiple Deprivation across Dundee's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-dundee-cold.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+## 2. Does 'Dampness Reduction' also correlate positively with 'Wealth' (higher SIMD percentile)? 
+
+### Glasgow
+
+```{r figure 4 dampness glasgow data}
+data_damp <- data %>% 
+  select(local_authority, small_area, population,dampness) %>%
+  filter(local_authority=="Glasgow City") %>%
+  rowwise() %>%
+  mutate(sum_weighted = (dampness/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+grid_glasgow_damp <- left_join(Ggrid_glasgow, data_damp)
+```
+
+```{r figure 4 damp glasgow}
+fig4 <- ggplot(grid_glasgow_damp, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Dampness Reduction (GBP)",
+    title = "Figure 4. Dampness Reduction vs. Multiple Deprivation across Glasgow's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-glasgow-damp.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+### Edinburgh
+
+```{r figure 4 dampness edinburgh data}
+data_damp <- data %>% 
+  select(local_authority, small_area, population,dampness) %>%
+  filter(local_authority=="City of Edinburgh") %>%
+  rowwise() %>%
+  mutate(sum_weighted = (dampness/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+grid_edinburgh_damp <- left_join(Ggrid_edinburgh, data_damp)
+```
+
+```{r figure 4 damp edinburgh}
+fig4 <- ggplot(grid_edinburgh_damp, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Dampness Reduction (GBP)",
+    title = "Figure 4. Dampness Reduction vs. Multiple Deprivation across Edinburgh's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-edinburgh-damp.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+### Aberdeen
+
+```{r figure 4 dampness aberdeen data}
+data_damp <- data %>% 
+  select(local_authority, small_area, population,dampness) %>%
+  filter(local_authority=="Aberdeen City") %>%
+  rowwise() %>%
+  mutate(sum_weighted = (dampness/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+grid_aberdeen_damp <- left_join(Ggrid_aberdeen, data_damp)
+```
+
+```{r figure 4 damp aberdeen}
+fig4 <- ggplot(grid_aberdeen_damp, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Dampness Reduction (GBP)",
+    title = "Figure 4. Dampness Reduction vs. Multiple Deprivation across Aberdeen's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-aberdeen-damp.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+### Dundee
+
+```{r figure 4 dampness dundee data}
+data_damp <- data %>% 
+  select(local_authority, small_area, population,dampness) %>%
+  filter(local_authority=="Dundee City") %>%
+  rowwise() %>%
+  mutate(sum_weighted = (dampness/population)*1000000) %>%
+  group_by(small_area, population) %>%
+  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
+  ungroup() %>%
+  rename("DataZone" = "small_area") %>%
+  select(DataZone, population, weighted)
+
+grid_dundee_damp <- left_join(Ggrid_dundee, data_damp)
+```
+
+```{r figure 4 damp dundee}
+fig4 <- ggplot(grid_dundee_damp, aes(x=Percentv2, y = weighted, color=weighted)) +
+  theme_classic()+
+  geom_jitter() +
+  geom_smooth(method="lm", color="#ed4a89", fill="white") +
+  labs(
+    x = "Scottish Index of Multiple Deprivation (SIMD Percentile)",
+    y = "Dampness Reduction (GBP)",
+    title = "Figure 4. Dampness Reduction vs. Multiple Deprivation across Dundee's Data Zones")+
+  scale_color_viridis(
+    option = "magma",
+    name = "Gains\nper Capita\n(GBP)",
+    alpha = 0.8,
+    begin = 0.1, 
+    end = 0.9,
+    discrete = F,
+    direction = 1, # dark is lowest, yellow is highest
+    guide = guide_colorbar(
+     keyheight = unit(30, units = "mm"),
+     title.position = "top",
+     reverse = F)) +
+  theme(
+    plot.title.position =  "plot" ,
+    plot.caption.position =  "plot",
+    text = element_text(color = "#3b3a34"),
+    legend.position = "none",
+    plot.caption = element_text(hjust = 0, color = "#706e63"),
+    plot.background = element_rect(fill = "#f6f5f4",color = NA),
+    plot.margin = unit(c(.5, .5, .2, .5), "cm"),
+    legend.background = element_rect(fill = "#f6f5f4",color = NA),
+    panel.background = element_rect(fill = "#f6f5f4",color = NA))
+
+fig4
+
+ggsave(filename = "output/validate-fig4-dundee-damp.tiff", 
+       bg="white", width = 190, height = 120, units = "mm")
+```
+
+

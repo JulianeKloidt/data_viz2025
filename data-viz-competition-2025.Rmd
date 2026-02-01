@@ -1,7 +1,7 @@
 ---
 title: "data-viz-competition-2025"
 author: "Juliane Kloidt"
-date: "2025-12-30"
+date: "2026-01-28"
 output: html_document
 ---
 
@@ -376,49 +376,4 @@ fig4_table <- grid_glasgow_cold %>%
          "Excess_Cold_Weighted" = "weighted")
 
 write_csv(fig4_table, "output/tab4-glasgow-inequal-housing.csv")
-```
-
-# Appendix
-Check that the argument for Figure 4 is not contradicted by other housing-related co-benefit factors.
-```{r check - dampness}
-data_damp <- data %>% 
-  select(local_authority, small_area, population,dampness) %>%
-  filter(local_authority=="Glasgow City") %>%
-  rowwise() %>%
-  mutate(sum_weighted = (dampness/population)*1000000) %>%
-  group_by(small_area, population) %>%
-  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  rename("DataZone" = "small_area") %>%
-  select(DataZone, population, weighted)
-
-grid_glasgow_damp <- left_join(Ggrid_glasgow, data_damp)
-
-ggplot(grid_glasgow_damp, aes(x=Percentv2, y = weighted)) +
-  theme_classic()+
-  geom_jitter() +
-  geom_smooth(method="lm") +
-  ylab("Co-Benefits from Reducing Dampness") + xlab("SIMD Percentile")
-```
-
-```{r check - excess heat}
-data_heat <- data %>% 
-  select(local_authority, small_area, population, excess_heat) %>%
-  filter(local_authority=="Glasgow City") %>%
-  rowwise() %>%
-  mutate(sum_weighted = (excess_heat/population)*1000000) %>%
-  group_by(small_area, population) %>%
-  summarize(weighted=sum(sum_weighted, na.rm = TRUE)) %>% 
-  ungroup() %>%
-  rename("DataZone" = "small_area") %>%
-  select(DataZone, population, weighted)
-
-grid_glasgow_heat <- left_join(Ggrid_glasgow, data_heat)
-
-
-ggplot(grid_glasgow_heat, aes(x=Percentv2, y = weighted)) +
-  theme_classic()+
-  geom_jitter() +
-  geom_smooth(method="lm") +
-  ylab("Co-Benefits from Reducing Excess Heat") + xlab("SIMD Percentile")
 ```
