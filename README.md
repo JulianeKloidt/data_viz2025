@@ -2,9 +2,9 @@
 
 This repository contains the data visualization and validation code for my entry into the Data Lab Visualisation Competition 2025. The project investigates the socio-economic distribution of climate action co-benefits across Scotland, identifying an "Urban Lag" and a regressive "Housing Anomaly" in current Net Zero projections.
 
-## 🎥 5-Minute Project Pitch
+## 🎥 5-Minute Project Pitch: 
 
-[![](images/data-viz-pitch-01.png)](https://www.loom.com/share/97c54820bceb4868ab7812ce574b0798)
+[\<click here\>](https://www.loom.com/share/97c54820bceb4868ab7812ce574b0798)
 
 ## 📊 Project Overview
 
